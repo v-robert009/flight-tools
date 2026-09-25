@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pilot Calc</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --panel-2: #16213a;
+    --accent: #38bdf8;
+    --accent-dim: #0ea5c9;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --danger: #f87171;
+    --ok: #4ade80;
+    --border: #2b3b57;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    min-height: 100vh;
+  }
+
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--panel-2);
+    border-bottom: 1px solid var(--border);
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .app-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px 10px;
+  }
+
+  .app-title .icon { font-size: 22px; }
+
+  .app-title h1 {
+    font-size: 17px;
+    font-weight: 600;
+    margin: 0;
+    letter-spacing: 0.2px;
+  }
+
+  .app-title .sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  nav {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 0 12px 10px;
+    scrollbar-width: none;
+  }
+  nav::-webkit-scrollbar { display: none; }
+
+  .tab-btn {
+    flex: 0 0 auto;
+    background: var(--panel);
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 14px;
+    font-size: 13.5px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .tab-btn.active {
+    background: var(--accent);
+    color: #05202b;
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+
+  main {
+    padding: 18px 16px 40px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+
+  .card h2 {
+    font-size: 16px;
+    margin: 0 0 4px;
+  }
+
+  .card .desc {
+    font-size: 12.5px;
+    color: var(--muted);
+    margin: 0 0 16px;
+  }
+
+  .field {
+    margin-bottom: 14px;
+  }
+
+  .field label {
+    display: block;
+    font-size: 12.5px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .field input {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 11px 12px;
+    color: var(--text);
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .field input:focus {
+    border-color: var(--accent);
+  }
+
+  .result-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .result-box {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    text-align: center;
+  }
+
+  .result-box .label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: none;
+    margin-bottom: 4px;
+  }
+
+  .result-box .value {
+    font-size: 20px;
+    font-weight: 700;
+  }
+
+  .result-box .value.accent { color: var(--accent); }
+  .result-box .value.ok { color: var(--ok); }
+  .result-box .value.danger { color: var(--danger); }
+
+  .soon {
+    text-align: center;
+    color: var(--muted);
+    font-size: 13.5px;
+    padding: 30px 10px;
+  }
+
+  .soon .big { font-size: 30px; display: block; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="app-title">
+    <span class="icon">✈️</span>
+    <div>
+      <h1>Pilot Calc</h1>
+      <div class="sub">Flight calculator — offline ready</div>
+    </div>
+  </div>
+  <nav id="tabNav">
+    <button class="tab-btn active" data-tab="crosswind">Crosswind</button>
+    <button class="tab-btn" data-tab="tsd">TSD</button>
+    <button class="tab-btn" data-tab="fuel">Fuel</button>
+    <button class="tab-btn" data-tab="da">Density Alt.</button>
+    <button class="tab-btn" data-tab="wb">W&B</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- === TAB: CROSSWIND === -->
+  <section id="tab-crosswind" class="tab-content">
+    <div class="card">
+      <h2>Crosswind</h2>
+      <p class="desc">Crosswind and headwind/tailwind components relative to the runway.</p>
+
+      <div class="field">
+        <label for="cw-runway">Runway heading (°, e.g. 27 → 270)</label>
+        <input type="number" id="cw-runway" inputmode="decimal" placeholder="e.g. 270" min="0" max="360">
+      </div>
+
+      <div class="field">
+        <label for="cw-wind-dir">Wind direction (°)</label>
+        <input type="number" id="cw-wind-dir" inputmode="decimal" placeholder="e.g. 250" min="0" max="360">
+      </div>
+
+      <div class="field">
+        <label for="cw-wind-speed">Wind speed (kt)</label>
+        <input type="number" id="cw-wind-speed" inputmode="decimal" placeholder="e.g. 15" min="0">
+      </div>
+
+      <div class="result-grid">
+        <div class="result-box">
+          <div class="label">Crosswind</div>
+          <div class="value accent" id="cw-crosswind">–</div>
+        </div>
+        <div class="result-box">
+          <div class="label" id="cw-headtail-label">Head/Tailwind</div>
+          <div class="value accent" id="cw-headtail">–</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- === TAB: TSD (placeholder) === -->
+  <section id="tab-tsd" class="tab-content" style="display:none;">
+    <div class="card">
+      <div class="soon">
+        <span class="big">⏱️</span>
+        Time-Speed-Distance<br>Coming in the next step.
+      </div>
+    </div>
+  </section>
+
+  <!-- === TAB: FUEL (placeholder) === -->
+  <section id="tab-fuel" class="tab-content" style="display:none;">
+    <div class="card">
+      <div class="soon">
+        <span class="big">⛽</span>
+        Fuel consumption / endurance<br>Coming in the next step.
+      </div>
+    </div>
+  </section>
+
+  <!-- === TAB: DENSITY ALTITUDE (placeholder) === -->
+  <section id="tab-da" class="tab-content" style="display:none;">
+    <div class="card">
+      <div class="soon">
+        <span class="big">🌡️</span>
+        Density altitude<br>Coming in the next step.
+      </div>
+    </div>
+  </section>
+
+  <!-- === TAB: WEIGHT & BALANCE (placeholder) === -->
+  <section id="tab-wb" class="tab-content" style="display:none;">
+    <div class="card">
+      <div class="soon">
+        <span class="big">⚖️</span>
+        Weight & Balance<br>Coming in the next step.
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  // ---- Tab navigation ----
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const tabContents = document.querySelectorAll('.tab-content');
+
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach(b => b.classList.remove('active'));
+      tabContents.forEach(c => c.style.display = 'none');
+      btn.classList.add('active');
+      document.getElementById('tab-' + btn.dataset.tab).style.display = 'block';
+    });
+  });
+
+  // ---- Crosswind calculator ----
+  const cwRunway = document.getElementById('cw-runway');
+  const cwWindDir = document.getElementById('cw-wind-dir');
+  const cwWindSpeed = document.getElementById('cw-wind-speed');
+  const cwCrosswindOut = document.getElementById('cw-crosswind');
+  const cwHeadtailOut = document.getElementById('cw-headtail');
+  const cwHeadtailLabel = document.getElementById('cw-headtail-label');
+
+  function calcCrosswind() {
+    const runway = parseFloat(cwRunway.value);
+    const windDir = parseFloat(cwWindDir.value);
+    const windSpeed = parseFloat(cwWindSpeed.value);
+
+    if (isNaN(runway) || isNaN(windDir) || isNaN(windSpeed)) {
+      cwCrosswindOut.textContent = '–';
+      cwHeadtailOut.textContent = '–';
+      cwHeadtailLabel.textContent = 'Head/Tailwind';
+      return;
+    }
+
+    // unghiul dintre direcția vântului și axa pistei
+    let angle = windDir - runway;
+    // normalizare -180..180
+    angle = ((angle + 180) % 360 + 360) % 360 - 180;
+    const rad = angle * Math.PI / 180;
+
+    const crosswind = Math.abs(windSpeed * Math.sin(rad));
+    const headtail = windSpeed * Math.cos(rad);
+
+    cwCrosswindOut.textContent = crosswind.toFixed(1) + ' kt';
+
+    if (headtail >= 0) {
+      cwHeadtailLabel.textContent = 'Headwind';
+      cwHeadtailOut.textContent = headtail.toFixed(1) + ' kt';
+      cwHeadtailOut.className = 'value ok';
+    } else {
+      cwHeadtailLabel.textContent = 'Tailwind';
+      cwHeadtailOut.textContent = Math.abs(headtail).toFixed(1) + ' kt';
+      cwHeadtailOut.className = 'value danger';
+    }
+  }
+
+  [cwRunway, cwWindDir, cwWindSpeed].forEach(el => {
+    el.addEventListener('input', calcCrosswind);
+  });
+</script>
+
+</body>
+</html>
