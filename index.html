@@ -148,6 +148,28 @@
     border-color: var(--accent);
   }
 
+  .field select {
+    width: 100%;
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 11px 12px;
+    color: var(--text);
+    font-size: 16px;
+    outline: none;
+    transition: border-color 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 34px;
+  }
+
+  .field select:focus {
+    border-color: var(--accent);
+  }
+
   .result-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -244,12 +266,41 @@
     </div>
   </section>
 
-  <!-- === TAB: TSD (placeholder) === -->
+  <!-- === TAB: TSD === -->
   <section id="tab-tsd" class="tab-content" style="display:none;">
     <div class="card">
-      <div class="soon">
-        <span class="big">⏱️</span>
-        Time-Speed-Distance<br>Coming in the next step.
+      <h2>Time - Speed - Distance</h2>
+      <p class="desc">Pick what you want to calculate, then fill in the other two values.</p>
+
+      <div class="field">
+        <label for="tsd-solve">Calculate</label>
+        <select id="tsd-solve">
+          <option value="distance">Distance</option>
+          <option value="time">Time</option>
+          <option value="speed">Speed</option>
+        </select>
+      </div>
+
+      <div class="field" id="tsd-field-speed">
+        <label for="tsd-speed">Speed (kt)</label>
+        <input type="number" id="tsd-speed" inputmode="decimal" placeholder="e.g. 110" min="0">
+      </div>
+
+      <div class="field" id="tsd-field-distance">
+        <label for="tsd-distance">Distance (NM)</label>
+        <input type="number" id="tsd-distance" inputmode="decimal" placeholder="e.g. 55" min="0">
+      </div>
+
+      <div class="field" id="tsd-field-time">
+        <label for="tsd-time">Time (minutes)</label>
+        <input type="number" id="tsd-time" inputmode="decimal" placeholder="e.g. 30" min="0">
+      </div>
+
+      <div class="result-grid" style="grid-template-columns: 1fr;">
+        <div class="result-box">
+          <div class="label" id="tsd-result-label">Distance</div>
+          <div class="value accent" id="tsd-result">–</div>
+        </div>
       </div>
     </div>
   </section>
@@ -345,7 +396,62 @@
   [cwRunway, cwWindDir, cwWindSpeed].forEach(el => {
     el.addEventListener('input', calcCrosswind);
   });
+
+  // ---- Time-Speed-Distance calculator ----
+  const tsdSolve = document.getElementById('tsd-solve');
+  const tsdSpeedField = document.getElementById('tsd-field-speed');
+  const tsdDistanceField = document.getElementById('tsd-field-distance');
+  const tsdTimeField = document.getElementById('tsd-field-time');
+  const tsdSpeed = document.getElementById('tsd-speed');
+  const tsdDistance = document.getElementById('tsd-distance');
+  const tsdTime = document.getElementById('tsd-time');
+  const tsdResultLabel = document.getElementById('tsd-result-label');
+  const tsdResult = document.getElementById('tsd-result');
+
+  function updateTsdFields() {
+    const solveFor = tsdSolve.value;
+
+    tsdSpeedField.style.display = solveFor === 'speed' ? 'none' : 'block';
+    tsdDistanceField.style.display = solveFor === 'distance' ? 'none' : 'block';
+    tsdTimeField.style.display = solveFor === 'time' ? 'none' : 'block';
+
+    const labels = { distance: 'Distance', time: 'Time', speed: 'Speed' };
+    tsdResultLabel.textContent = labels[solveFor];
+
+    calcTsd();
+  }
+
+  function calcTsd() {
+    const solveFor = tsdSolve.value;
+    const speed = parseFloat(tsdSpeed.value);
+    const distance = parseFloat(tsdDistance.value);
+    const timeMin = parseFloat(tsdTime.value);
+
+    if (solveFor === 'distance') {
+      if (isNaN(speed) || isNaN(timeMin)) { tsdResult.textContent = '–'; return; }
+      const result = speed * (timeMin / 60);
+      tsdResult.textContent = result.toFixed(1) + ' NM';
+
+    } else if (solveFor === 'time') {
+      if (isNaN(speed) || isNaN(distance) || speed === 0) { tsdResult.textContent = '–'; return; }
+      const resultMin = (distance / speed) * 60;
+      const h = Math.floor(resultMin / 60);
+      const m = Math.round(resultMin % 60);
+      tsdResult.textContent = (h > 0 ? h + 'h ' : '') + m + ' min';
+
+    } else if (solveFor === 'speed') {
+      if (isNaN(distance) || isNaN(timeMin) || timeMin === 0) { tsdResult.textContent = '–'; return; }
+      const result = distance / (timeMin / 60);
+      tsdResult.textContent = result.toFixed(1) + ' kt';
+    }
+  }
+
+  tsdSolve.addEventListener('change', updateTsdFields);
+  [tsdSpeed, tsdDistance, tsdTime].forEach(el => {
+    el.addEventListener('input', calcTsd);
+  });
+  updateTsdFields();
 </script>
 
 </body>
-</html>
+</html>add TSD calculator
